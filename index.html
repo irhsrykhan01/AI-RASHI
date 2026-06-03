@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI RASHI</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111827;color:#fff;max-width:900px;margin:auto;padding:15px}
+.card{background:#1f2937;padding:15px;border-radius:12px;margin:10px 0}
+textarea,input{width:100%;padding:10px;border-radius:8px;border:none;background:#0f172a;color:#fff}
+button{padding:10px 14px;border:none;border-radius:8px;background:#2563eb;color:#fff;margin:4px;cursor:pointer}
+#out{white-space:pre-wrap;line-height:1.5}
+.small{opacity:.8;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h1>🤖 AI RASHI</h1>
+<div class="small">Belajar • Latihan • Ujian • Gemini AI</div>
+</div>
+
+<div class="card">
+<textarea id="kisi" placeholder="Tempel kisi-kisi di sini..."></textarea><br><br>
+<button onclick="belajar()">📖 Belajar</button>
+<button onclick="latihan()">🎯 Latihan</button>
+<button onclick="ujian()">📝 Ujian</button>
+</div>
+
+<div class="card">
+⏱️ Timer: <span id="timer">90:00</span><br>
+🏆 Nilai Terakhir: <span id="last">0</span><br>
+🥇 Nilai Tertinggi: <span id="best">0</span>
+</div>
+
+<div class="card" id="out">Selamat datang di AI RASHI 🚀</div>
+
+<script>
+let score=0,time=5400,timerRun=false;
+
+function saveScore(n){
+ localStorage.setItem("lastScore",n);
+ if(n>(+localStorage.getItem("bestScore")||0)){
+   localStorage.setItem("bestScore",n);
+ }
+ loadStats();
+}
+
+function loadStats(){
+ document.getElementById("last").textContent=localStorage.getItem("lastScore")||0;
+ document.getElementById("best").textContent=localStorage.getItem("bestScore")||0;
+}
+loadStats();
+
+function startTimer(){
+ if(timerRun) return;
+ timerRun=true;
+ setInterval(()=>{
+  if(time<=0) return;
+  time--;
+  let m=Math.floor(time/60),s=time%60;
+  document.getElementById("timer").textContent=m+":"+(s<10?"0":"")+s;
+ },1000);
+}
+
+async function askAI(prompt){
+ const out=document.getElementById("out");
+ out.textContent="⏳ Meminta Gemini...";
+ try{
+  const r=await fetch("/api/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({text:prompt})
+  });
+  const d=await r.json();
+  out.textContent=d.reply||"Tidak ada jawaban.";
+ }catch(e){
+  out.textContent="❌ Gagal terhubung ke Gemini. Pastikan Vercel & /api/chat sudah benar.";
+ }
+}
+
+function belajar(){
+ let k=document.getElementById("kisi").value.trim();
+ if(!k) return alert("Masukkan kisi-kisi!");
+ askAI("Jelaskan kisi-kisi berikut untuk siswa SMP. Beri ringkasan, poin penting, dan tips hafalan:\n\n"+k);
+}
+
+function latihan(){
+ let k=document.getElementById("kisi").value.trim();
+ if(!k) return alert("Masukkan kisi-kisi!");
+ askAI("Buat 10 soal campuran (pilihan ganda, isian singkat, menjodohkan) tanpa jawaban dari kisi-kisi:\n\n"+k);
+}
+
+function ujian(){
+ startTimer();
+ let k=document.getElementById("kisi").value.trim();
+ if(!k) return alert("Masukkan kisi-kisi!");
+ askAI("Buat ujian 40 soal SMP dari kisi-kisi berikut. Campur pilihan ganda, isian, menjodohkan, dan essay. Jangan tampilkan kunci jawaban:\n\n"+k);
+ score=0;
+ saveScore(score);
+}
+</script>
+
+</body>
+</html>
